@@ -360,4 +360,14 @@ MigrationBackup/
 .ionide/
 
 # Fody - auto-generated XML schema
-FodyWeavers.xsd
+FodyWeavers.xsd 
+# Ignore all .mdf files
+*.mdf
+*.ldf
+
+# Ignore all .mdf files
+*.mdf
+*.ldf
+
+# Except for the specific file you want to share
+!App_Data/UCSPDB.mdf
