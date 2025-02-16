@@ -1,0 +1,83 @@
+﻿/* General Styles */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f7f7f7;
+    color: #333;
+}
+
+h2 {
+    color: #006699; /* University theme color */
+    margin-bottom: 20px;
+}
+
+h3 {
+    color: #006699; /* University theme color */
+    margin-top: 40px;
+}
+
+/* Button Styles */
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    color: #fff;
+}
+
+.btn-primary {
+    background-color: #007bff;
+}
+
+    .btn-primary:hover {
+        opacity: 0.8;
+    }
+
+/* GridView Styles */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+    .table th, .table td {
+        padding: 12px;
+        border: 1px solid #ddd;
+    }
+
+    .table th {
+        background-color: #006699; /* University theme color */
+        color: #fff;
+        text-align: left;
+    }
+
+    .table tr:nth-child(even) {
+        background-color: #f2f2f2;
+    }
+
+    .table tr:hover {
+        background-color: #ddd;
+    }
+
+/* Form Styles */
+.form-label {
+    font-weight: bold;
+    color: #333;
+}
+
+.form-control {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    width: 100%;
+    box-shadow: none;
+    margin-bottom: 10px;
+}
+
+/* Responsive Styles */
+@media screen and (max-width: 768px) {
+    .col-md-4 {
+        flex: 1;
+        padding: 10px;
+        min-width: 100%;
+    }
+}

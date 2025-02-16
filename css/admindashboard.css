@@ -1,0 +1,205 @@
+﻿/* Reset some default styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f7fa;
+    color: #333;
+    display: flex;
+    height: 100vh;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    width: 250px;
+    background: linear-gradient(to bottom, #096b0f, #33e83f);
+    color: white;
+    padding-top: 20px;
+    position: fixed;
+    height: 100%;
+    left: 0;
+    top: 0;
+}
+
+    .sidebar h2 {
+        text-align: center;
+        color: #ecf0f1;
+        margin-bottom: 40px;
+    }
+
+    .sidebar ul {
+        list-style-type: none;
+    }
+
+        .sidebar ul li {
+            margin: 15px 0;
+            text-align: left;
+            padding-right: 10px;
+        }
+
+            .sidebar ul li a {
+                color: #ecf0f1;
+                text-decoration: none;
+                padding: 10px 20px;
+                display: block;
+                transition: background-color 0.3s ease;
+            }
+
+                .sidebar ul li a:hover {
+                    background-color: #006699;
+                }
+
+            .sidebar ul li.active a {
+                background-color: #16a085;
+            }
+
+/* Content Area */
+.content {
+    margin-left: 250px;
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+}
+
+    .content h1 {
+        font-size: 2rem;
+        margin-bottom: 20px;
+        color: #2c3e50;
+    }
+
+/* Top Navigation */
+.top-nav {
+    width: 100%;
+    background-color: #34495e;
+    color: white;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 250px;
+    right: 0;
+    z-index: 1000;
+}
+
+
+
+/* Dashboard Card Styles */
+.card {
+    background-color: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+    .card h3 {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+    }
+
+    .card .card-content {
+        font-size: 1rem;
+        color: #7f8c8d;
+    }
+
+    .card .card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid #ecf0f1;
+        padding-top: 10px;
+    }
+
+        .card .card-footer a {
+            color: #16a085;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+            .card .card-footer a:hover {
+                text-decoration: underline;
+            }
+
+/* Tabs */
+.tabs {
+    display: flex;
+    margin-bottom: 20px;
+}
+
+    .tabs li {
+        list-style-type: none;
+        padding: 10px 20px;
+        background-color: #ecf0f1;
+        margin-right: 10px;
+        cursor: pointer;
+        border-radius: 5px;
+        transition: background-color 0.3s ease;
+    }
+
+        .tabs li.active {
+            background-color: #16a085;
+            color: white;
+        }
+
+        .tabs li:hover {
+            background-color: #bdc3c7;
+        }
+
+.content .tab-content {
+    display: none;
+}
+
+    .content .tab-content.visible {
+        display: block;
+    }
+
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+    body {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        top: 0;
+        left: 0;
+    }
+
+    .content {
+        margin-left: 0;
+    }
+
+    .top-nav {
+        left: 0;
+    }
+
+        .top-nav .search input {
+            width: 100%;
+        }
+
+    .card {
+        margin-bottom: 10px;
+    }
+
+    .tabs li {
+        padding: 8px 15px;
+    }
+}
+
+
+.adminlogo {
+    width: 200px; /* Adjust the width as needed */
+    height: auto; /* Maintain aspect ratio */
+    display: block;
+    margin: 0 auto; /* Center the logo */
+   
+}
