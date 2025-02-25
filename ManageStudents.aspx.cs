@@ -9,7 +9,7 @@ namespace AMS
 {
     public partial class ManageStudents : System.Web.UI.Page
     {
-        string connString = System.Configuration.ConfigurationManager.ConnectionStrings["UCSPDBConnectionString"].ConnectionString;
+        string connString = ConfigurationManager.ConnectionStrings["UCSPDBConnectionString"].ConnectionString;
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -24,7 +24,7 @@ namespace AMS
         {
             using (SqlConnection conn = new SqlConnection(connString))
             {
-                SqlDataAdapter da = new SqlDataAdapter("SELECT semester_id, semester_name, year_name FROM Semesters", conn);
+                SqlDataAdapter da = new SqlDataAdapter("SELECT semester_id, semester_name FROM Semesters", conn);
                 DataTable dt = new DataTable();
                 da.Fill(dt);
                 ddlSemester.DataSource = dt;
@@ -32,6 +32,11 @@ namespace AMS
                 ddlSemester.DataValueField = "semester_id";
                 ddlSemester.DataBind();
                 ddlSemester.Items.Insert(0, new ListItem("All Semesters", "0"));
+
+                ddlSemesterModal.DataSource = dt;
+                ddlSemesterModal.DataTextField = "semester_name";
+                ddlSemesterModal.DataValueField = "semester_id";
+                ddlSemesterModal.DataBind();
             }
         }
 
@@ -39,14 +44,15 @@ namespace AMS
         {
             using (SqlConnection conn = new SqlConnection(connString))
             {
-                string query = @"SELECT s.id, s.rollno, s.formatted_rollno, s.name, 
-                                s.gender, s.email, s.major, s.section, s.status, 
-                                sem.semester_id, sem.semester_name, sem.year_name 
-                         FROM Students s 
-                         JOIN Semesters sem ON s.semester_id = sem.semester_id 
-                         WHERE (@SearchQuery = '' OR s.name LIKE @SearchQuery) 
-                         AND (@SemesterId = 0 OR s.semester_id = @SemesterId)";
-
+                string query = @"
+                                SELECT s.id, s.rollno, s.formatted_rollno, s.name, 
+                                       s.gender, s.email, s.major, s.section, s.status, 
+                                       sem.semester_id, sem.semester_name 
+                                FROM Students s 
+                                JOIN Semesters sem ON s.semester_id = sem.semester_id 
+                                WHERE (@SearchQuery = '' OR s.name LIKE @SearchQuery) 
+                                  AND (@SemesterId = 0 OR s.semester_id = @SemesterId) 
+                                ORDER BY s.formatted_rollno";
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@SearchQuery", string.IsNullOrEmpty(searchQuery) ? "" : "%" + searchQuery + "%");
                 cmd.Parameters.AddWithValue("@SemesterId", semesterId);
@@ -62,7 +68,6 @@ namespace AMS
             }
         }
 
-        // Add student event
         protected void btnSaveStudent_Click(object sender, EventArgs e)
         {
             string rollNo = txtRollNoModal.Text;
@@ -93,7 +98,6 @@ namespace AMS
             // Show success message
             ScriptManager.RegisterStartupScript(this, this.GetType(), "showSuccessMessage", "showSuccessMessage('Student added successfully');", true);
         }
-
 
         private void CloseModal()
         {
@@ -142,9 +146,12 @@ namespace AMS
             DropDownList ddlSemesterId = (DropDownList)row.FindControl("ddlSemesterId");
             int semesterId = Convert.ToInt32(ddlSemesterId.SelectedValue);
 
+            DropDownList ddlStatus = (DropDownList)row.FindControl("ddlStatus");
+            string status = ddlStatus != null ? ddlStatus.SelectedValue : string.Empty;
+
             using (SqlConnection conn = new SqlConnection(connString))
             {
-                string query = "UPDATE Students SET rollno=@Rollno, name=@Name, gender=@Gender, major=@Major, section=@Section, semester_id=@SemesterId WHERE id=@Id";
+                string query = "UPDATE Students SET rollno=@Rollno, name=@Name, gender=@Gender, major=@Major, section=@Section, semester_id=@SemesterId, status=@Status WHERE id=@Id";
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@Rollno", rollno);
                 cmd.Parameters.AddWithValue("@Name", name);
@@ -152,6 +159,7 @@ namespace AMS
                 cmd.Parameters.AddWithValue("@Major", major);
                 cmd.Parameters.AddWithValue("@Section", section);
                 cmd.Parameters.AddWithValue("@SemesterId", semesterId);
+                cmd.Parameters.AddWithValue("@Status", status);
                 cmd.Parameters.AddWithValue("@Id", id);
                 conn.Open();
                 cmd.ExecuteNonQuery();
@@ -183,8 +191,27 @@ namespace AMS
                 DropDownList ddlSemesterId = (DropDownList)e.Row.FindControl("ddlSemesterId");
                 string semesterId = DataBinder.Eval(e.Row.DataItem, "semester_id").ToString();
                 ddlSemesterId.SelectedValue = semesterId;
+
+                // Populate Semester DropDownList
+                using (SqlConnection conn = new SqlConnection(connString))
+                {
+                    SqlDataAdapter da = new SqlDataAdapter("SELECT semester_id, semester_name FROM Semesters", conn);
+                    DataTable dt = new DataTable();
+                    da.Fill(dt);
+                    ddlSemesterId.DataSource = dt;
+                    ddlSemesterId.DataTextField = "semester_name";
+                    ddlSemesterId.DataValueField = "semester_id";
+                    ddlSemesterId.DataBind();
+                    ddlSemesterId.SelectedValue = semesterId;
+                }
+
+                // Bind Status DropDownList
+                DropDownList ddlStatus = (DropDownList)e.Row.FindControl("ddlStatus");
+                string status = DataBinder.Eval(e.Row.DataItem, "status").ToString();
+                ddlStatus.SelectedValue = status;
             }
         }
+
         protected void gvStudents_RowDeleting(object sender, GridViewDeleteEventArgs e)
         {
             int id = Convert.ToInt32(gvStudents.DataKeys[e.RowIndex].Value);
@@ -194,24 +221,12 @@ namespace AMS
                 string query = "DELETE FROM Students WHERE id=@Id";
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@Id", id);
-
                 conn.Open();
                 cmd.ExecuteNonQuery();
-
-                // Reseed identity column so the next student gets the deleted ID.
-                string reseedQuery = "DBCC CHECKIDENT ('Students', RESEED, @Id)";
-                SqlCommand reseedCmd = new SqlCommand(reseedQuery, conn);
-                reseedCmd.Parameters.AddWithValue("@Id", id);
-
-                reseedCmd.ExecuteNonQuery();
             }
 
             LoadStudents();
-
-            // Show success message
             ScriptManager.RegisterStartupScript(this, this.GetType(), "showSuccessMessage", "showSuccessMessage('Student deleted successfully');", true);
         }
-
-
     }
 }

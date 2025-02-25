@@ -1,96 +1,16 @@
 ﻿using System;
+using System.Configuration;
+using System.Data;
 using System.Data.SqlClient;
-using System.Net;
 using System.Net.Mail;
 using System.Web.UI;
-using System.Web.UI.WebControls;
+using System.Web.Services;
 
 namespace AMS
 {
     public partial class ForgotPass : Page
     {
-        string connString = System.Configuration.ConfigurationManager.ConnectionStrings["UCSPDBConnectionString"].ConnectionString;
-
-        protected void btnSendOTP_Click(object sender, EventArgs e)
-        {
-            string email = txtEmail.Text.Trim();
-            bool emailExists = false;
-
-            using (SqlConnection conn = new SqlConnection(connString))
-            {
-                conn.Open();
-
-                string studentQuery = "SELECT COUNT(*) FROM Students WHERE email = @Email";
-                using (SqlCommand cmd = new SqlCommand(studentQuery, conn))
-                {
-                    cmd.Parameters.AddWithValue("@Email", email);
-                    int count = (int)cmd.ExecuteScalar();
-                    if (count > 0) emailExists = true;
-                }
-
-                if (!emailExists)
-                {
-                    string teacherQuery = "SELECT COUNT(*) FROM Teachers WHERE email = @Email";
-                    using (SqlCommand cmd = new SqlCommand(teacherQuery, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@Email", email);
-                        int count = (int)cmd.ExecuteScalar();
-                        if (count > 0) emailExists = true;
-                    }
-                }
-            }
-
-            if (!emailExists)
-            {
-                ScriptManager.RegisterStartupScript(this, GetType(), "showError", "showError('Your Email is Not Registered!');", true);
-                return;
-            }
-
-
-            // Generate and Send OTP
-            string otp = GenerateOTP();
-            DateTime expiry = DateTime.Now.AddMinutes(3);
-
-            StoreOTPInDatabase(email, otp, expiry);
-            SendOTPEmail(email, otp);
-
-            Session["Email"] = email;
-            ScriptManager.RegisterStartupScript(this, GetType(), "showOTPSection", "showOTPSection();", true);
-        }
-
-
-        protected void btnVerifyOTP_Click(object sender, EventArgs e)
-        {
-            string email = Session["Email"] as string;
-            string enteredOTP = txtOTP.Text.Trim();
-
-            if (ValidateOTP(email, enteredOTP))
-            {
-                // OTP is correct, show password section
-                ScriptManager.RegisterStartupScript(this, GetType(), "showPasswordSection", "showPasswordSection();", true);
-            }
-            else
-            {
-                ScriptManager.RegisterStartupScript(this, GetType(), "showError", "showError('Invalid or expired OTP!');", true);
-            }
-        }
-
-        protected void btnUpdatePassword_Click(object sender, EventArgs e)
-        {
-            string email = Session["Email"] as string;
-            string newPassword = txtNewPassword.Text.Trim();
-            string confirmPassword = txtConfirmPassword.Text.Trim();
-
-            if (newPassword != confirmPassword)
-            {
-                ScriptManager.RegisterStartupScript(this, GetType(), "showError", "showError('Passwords do not match!');", true);
-                return;
-            }
-
-            ChangePassword(email, newPassword);
-            ScriptManager.RegisterStartupScript(this, GetType(), "showSuccess", "showSuccess('Password changed successfully!');", true);
-        }
-
+        string connString = ConfigurationManager.ConnectionStrings["UCSPDBConnectionString"].ConnectionString;
 
         private string GenerateOTP()
         {
@@ -98,39 +18,173 @@ namespace AMS
             return rand.Next(100000, 999999).ToString();
         }
 
-        private void StoreOTPInDatabase(string email, string otp, DateTime expiry)
+       private void StoreOTPInDatabase(string email, string otp, DateTime expiry)
+{
+    using (SqlConnection conn = new SqlConnection(connString))
+    {
+        conn.Open();
+
+        // Retrieve the user ID from the Users table based on the email
+        string userIdQuery = @"
+            SELECT id FROM Users WHERE username = @Email";
+
+        int userId = 0;
+        using (SqlCommand cmd = new SqlCommand(userIdQuery, conn))
         {
-            using (SqlConnection conn = new SqlConnection(connString))
+            cmd.Parameters.AddWithValue("@Email", email);
+            object result = cmd.ExecuteScalar();
+            if (result != null)
             {
-                conn.Open();
+                userId = (int)result;
+            }
+        }
 
-                // Retrieve the user ID from the Students or Teachers table
-                string userIdQuery = @"
-                    SELECT id FROM Students WHERE email = @Email
-                    UNION
-                    SELECT TeacherID FROM Teachers WHERE email = @Email";
-
-                int userId = 0;
-                using (SqlCommand cmd = new SqlCommand(userIdQuery, conn))
+        // If user ID is not found, check the Students and Teachers tables
+        if (userId == 0)
+        {
+            string studentIdQuery = @"
+                SELECT id FROM Students WHERE email = @Email";
+            using (SqlCommand cmd = new SqlCommand(studentIdQuery, conn))
+            {
+                cmd.Parameters.AddWithValue("@Email", email);
+                object result = cmd.ExecuteScalar();
+                if (result != null)
                 {
-                    cmd.Parameters.AddWithValue("@Email", email);
-                    userId = (int)cmd.ExecuteScalar();
+                    int studentId = (int)result;
+                    // Retrieve the user ID from the Users table based on the student ID
+                    userIdQuery = @"
+                        SELECT id FROM Users WHERE student_id = @StudentId";
+                    using (SqlCommand cmdUser = new SqlCommand(userIdQuery, conn))
+                    {
+                        cmdUser.Parameters.AddWithValue("@StudentId", studentId);
+                        result = cmdUser.ExecuteScalar();
+                        if (result != null)
+                        {
+                            userId = (int)result;
+                        }
+                    }
                 }
+            }
+        }
 
-                if (userId == 0)
+        if (userId == 0)
+        {
+            string teacherIdQuery = @"
+                SELECT TeacherID FROM Teachers WHERE Email = @Email";
+            using (SqlCommand cmd = new SqlCommand(teacherIdQuery, conn))
+            {
+                cmd.Parameters.AddWithValue("@Email", email);
+                object result = cmd.ExecuteScalar();
+                if (result != null)
                 {
-                    throw new Exception("User not found.");
+                    int teacherId = (int)result;
+                    // Retrieve the user ID from the Users table based on the teacher ID
+                    userIdQuery = @"
+                        SELECT id FROM Users WHERE teacher_id = @TeacherId";
+                    using (SqlCommand cmdUser = new SqlCommand(userIdQuery, conn))
+                    {
+                        cmdUser.Parameters.AddWithValue("@TeacherId", teacherId);
+                        result = cmdUser.ExecuteScalar();
+                        if (result != null)
+                        {
+                            userId = (int)result;
+                        }
+                    }
                 }
+            }
+        }
 
-                // Update the Users table with the OTP and expiry date
-                string query = "UPDATE Users SET OTP = @OTP, OTPExpiryDateTime = @ExpiryDateTime WHERE id = @UserId";
-                using (SqlCommand cmd = new SqlCommand(query, conn))
-                {
-                    cmd.Parameters.AddWithValue("@UserId", userId);
-                    cmd.Parameters.AddWithValue("@OTP", otp);
-                    cmd.Parameters.AddWithValue("@ExpiryDateTime", expiry);
-                    cmd.ExecuteNonQuery();
-                }
+        if (userId == 0)
+        {
+            throw new Exception($"User with email '{email}' not found.");
+        }
+
+        // Update the Users table with the OTP and expiry date
+        string query = "UPDATE Users SET OTP = @OTP, OTPExpiryDateTime = @ExpiryDateTime WHERE id = @UserId";
+        using (SqlCommand cmd = new SqlCommand(query, conn))
+        {
+            cmd.Parameters.AddWithValue("@UserId", userId);
+            cmd.Parameters.AddWithValue("@OTP", otp);
+            cmd.Parameters.AddWithValue("@ExpiryDateTime", expiry);
+            cmd.ExecuteNonQuery();
+        }
+    }
+}
+
+        private void SendOTPEmail(string email, string otp)
+        {
+            try
+            {
+                MailMessage mail = new MailMessage();
+                SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com");
+
+                mail.From = new MailAddress("ucspstudentsaffair@gmail.com");
+                mail.To.Add(email);
+                mail.Subject = "Password Reset OTP code";
+                mail.Body = $"Your OTP code is {otp}. OTP expires after 10 minutes.";
+
+                SmtpServer.Port = 587;
+                SmtpServer.Credentials = new System.Net.NetworkCredential("ucspstudentsaffair@gmail.com", "hlso ftks lrbl pzgy");
+                SmtpServer.EnableSsl = true;
+
+                SmtpServer.Send(mail);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Failed to send OTP email: " + ex.Message);
+            }
+        }
+
+        [WebMethod]
+        public static string SendOTP(string email)
+        {
+            ForgotPass instance = new ForgotPass();
+            string otp = instance.GenerateOTP();
+            DateTime expiry = DateTime.Now.AddMinutes(10); // OTP expires in 10 minutes
+
+            try
+            {
+                instance.StoreOTPInDatabase(email, otp, expiry);
+                instance.SendOTPEmail(email, otp);
+                return "OTP sent to your email.";
+            }
+            catch (Exception ex)
+            {
+                return "Error: " + ex.Message;
+            }
+        }
+
+        [WebMethod]
+        public static string VerifyOTP(string email, string otp)
+        {
+            ForgotPass instance = new ForgotPass();
+            if (instance.ValidateOTP(email, otp))
+            {
+                return "OTP verified";
+            }
+            else
+            {
+                return "Invalid or expired OTP";
+            }
+        }
+
+        [WebMethod]
+        public static string UpdatePassword(string email, string newPassword, string confirmPassword)
+        {
+            if (newPassword != confirmPassword)
+            {
+                return "Passwords do not match";
+            }
+
+            ForgotPass instance = new ForgotPass();
+            try
+            {
+                instance.ChangePassword(email, newPassword);
+                return "Password updated successfully";
+            }
+            catch (Exception ex)
+            {
+                return "Error: " + ex.Message;
             }
         }
 
@@ -139,7 +193,7 @@ namespace AMS
             using (SqlConnection conn = new SqlConnection(connString))
             {
                 conn.Open();
-                string query = "SELECT COUNT(*) FROM Users WHERE email = @Email AND OTP = @OTP AND OTPExpiryDateTime > @CurrentDateTime";
+                string query = "SELECT COUNT(*) FROM Users WHERE username = @Email AND OTP = @OTP AND OTPExpiryDateTime > @CurrentDateTime";
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
@@ -153,57 +207,106 @@ namespace AMS
             }
         }
 
+        private void ChangePassword(string email, string newPassword)
+{
+    using (SqlConnection conn = new SqlConnection(connString))
+    {
+        conn.Open();
 
-        private void SendOTPEmail(string email, string otp)
+        // Retrieve the user ID from the Users table based on the email
+        string userIdQuery = @"
+            SELECT id FROM Users WHERE username = @Email";
+
+        int userId = 0;
+        using (SqlCommand cmd = new SqlCommand(userIdQuery, conn))
         {
-            MailMessage mail = new MailMessage();
-            SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com");
-
-            mail.From = new MailAddress("stdntsaffair@gmail.com");
-            mail.To.Add(email);
-            mail.Subject = "Password Reset OTP code";
-            mail.Body = $"Your OTP code is {otp} OTP expire after 3 minutes";
-
-            SmtpServer.Port = 587;
-            SmtpServer.Credentials = new NetworkCredential("stdntsaffair@gmail.com", "cynh thpp dcqp twwt");
-            SmtpServer.EnableSsl = true;
-
-            SmtpServer.Send(mail);
+            cmd.Parameters.AddWithValue("@Email", email);
+            object result = cmd.ExecuteScalar();
+            if (result != null)
+            {
+                userId = (int)result;
+            }
         }
 
-        private void ChangePassword(string email, string newPassword)
+        // If user ID is not found, check the Students and Teachers tables
+        if (userId == 0)
         {
-            using (SqlConnection conn = new SqlConnection(connString))
+            string studentIdQuery = @"
+                SELECT id FROM Students WHERE email = @Email";
+            using (SqlCommand cmd = new SqlCommand(studentIdQuery, conn))
             {
-                conn.Open();
-
-                // Retrieve the user ID from the Students or Teachers table
-                string userIdQuery = @"
-                    SELECT UserId FROM Students WHERE email = @Email
-                    UNION
-                    SELECT UserId FROM Teachers WHERE email = @Email";
-
-                int userId = 0;
-                using (SqlCommand cmd = new SqlCommand(userIdQuery, conn))
+                cmd.Parameters.AddWithValue("@Email", email);
+                object result = cmd.ExecuteScalar();
+                if (result != null)
                 {
-                    cmd.Parameters.AddWithValue("@Email", email);
-                    userId = (int)cmd.ExecuteScalar();
-                }
-
-                if (userId == 0)
-                {
-                    throw new Exception("User not found.");
-                }
-
-                // Update the Users table with the new password
-                string query = "UPDATE Users SET Password = @Password WHERE UserId = @UserId";
-                using (SqlCommand cmd = new SqlCommand(query, conn))
-                {
-                    cmd.Parameters.AddWithValue("@UserId", userId);
-                    cmd.Parameters.AddWithValue("@Password", newPassword);
-                    cmd.ExecuteNonQuery();
+                    int studentId = (int)result;
+                    // Retrieve the user ID from the Users table based on the student ID
+                    userIdQuery = @"
+                        SELECT id FROM Users WHERE student_id = @StudentId";
+                    using (SqlCommand cmdUser = new SqlCommand(userIdQuery, conn))
+                    {
+                        cmdUser.Parameters.AddWithValue("@StudentId", studentId);
+                        result = cmdUser.ExecuteScalar();
+                        if (result != null)
+                        {
+                            userId = (int)result;
+                        }
+                    }
                 }
             }
+        }
+
+        if (userId == 0)
+        {
+            string teacherIdQuery = @"
+                SELECT TeacherID FROM Teachers WHERE Email = @Email";
+            using (SqlCommand cmd = new SqlCommand(teacherIdQuery, conn))
+            {
+                cmd.Parameters.AddWithValue("@Email", email);
+                object result = cmd.ExecuteScalar();
+                if (result != null)
+                {
+                    int teacherId = (int)result;
+                    // Retrieve the user ID from the Users table based on the teacher ID
+                    userIdQuery = @"
+                        SELECT id FROM Users WHERE teacher_id = @TeacherId";
+                    using (SqlCommand cmdUser = new SqlCommand(userIdQuery, conn))
+                    {
+                        cmdUser.Parameters.AddWithValue("@TeacherId", teacherId);
+                        result = cmdUser.ExecuteScalar();
+                        if (result != null)
+                        {
+                            userId = (int)result;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (userId == 0)
+        {
+            throw new Exception("User not found.");
+        }
+
+        // Update the Users table with the new password
+        string query = "UPDATE Users SET password = @Password, OTP = NULL, OTPExpiryDateTime = NULL WHERE id = @UserId";
+        using (SqlCommand cmd = new SqlCommand(query, conn))
+        {
+            cmd.Parameters.AddWithValue("@UserId", userId);
+            cmd.Parameters.AddWithValue("@Password", newPassword);
+            cmd.ExecuteNonQuery();
+        }
+    }
+}
+
+        private void showError(string message)
+        {
+            ScriptManager.RegisterStartupScript(this, this.GetType(), "showError", $"showError('{message}');", true);
+        }
+
+        private void showSuccess(string message)
+        {
+            ScriptManager.RegisterStartupScript(this, this.GetType(), "showSuccess", $"showSuccess('{message}');", true);
         }
     }
 }

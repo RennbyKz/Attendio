@@ -1,6 +1,11 @@
 ﻿<%@ Page Title="Manage Users" Language="C#" MasterPageFile="~/admindashboard.Master" AutoEventWireup="true" CodeBehind="ManageUsers.aspx.cs" Inherits="AMS.ManageUsers" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="MainContent" runat="server">
+    <style>
+    .body{
+        height: 1800px;
+    }
+    </style>
     <h2>Manage Users</h2>
 
     <asp:Label ID="lblMessage" runat="server" ForeColor="Red"></asp:Label>
@@ -84,6 +89,7 @@
         </div>
     </div>
 </div>
+    <footer>@Copyright 2025 Student Affair</footer>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
 

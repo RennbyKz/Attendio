@@ -6,8 +6,9 @@
     <title>UCSP Rollcall Attendance System</title>
     <link rel="icon" type="image/png" href="images/UcspLogo1.png" />        
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Poppins', sans-serif;
             background-image: url('images/background.jpg'); 
             background-repeat: no-repeat; /* Optional */ 
             background-size: cover; /* Optional */
@@ -38,13 +39,13 @@
 
         .header h2 {
             margin: 0;
-            font-size: 48px; /* Increase the main header text size */
+            font-size: 60px; /* Increase the main header text size */
             font-weight: bold;
         }
 
         .header h3 {
             margin: 10px 0 0;
-            font-size: 38px; /* Increase the subheader text size */
+            font-size: 50px; /* Increase the subheader text size */
             font-weight: 300;
         }
 
@@ -133,11 +134,25 @@
         .login-form .links a:hover {
             text-decoration: underline;
         }
+        .btn{
+               background: linear-gradient(to bottom, #00A9F2, #00E2E0) !important;
+        }
+       .links a {
+    color: red !important;
+    text-decoration: none !important;
+    font-size: 16px;
+}
+
+.links a:hover {
+    text-decoration: none !important;
+    color: green;
+}
+
     </style>
     <!-- SweetAlert2 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <link href="css/sweetalert2.min.css" rel="stylesheet" />
     <!-- SweetAlert2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/sweetalert2@11.js"></script>
 </head>
 
 <body>
@@ -152,7 +167,7 @@
         <div class="container">
             <img src="images/UcspLogo1.png" alt="UcspLogo" />
             <div class="login-form">
-                <h1>Member Login</h1>
+                <h1 style="color: #00a9f2;">Member Login</h1>
                 <asp:Label ID="lblErrorMessage" runat="server" CssClass="error-message" Visible="false"></asp:Label>
                 <label for="username">Username</label>
                 <asp:TextBox ID="txtUsername" runat="server" CssClass="form-control" Placeholder="Enter your username"></asp:TextBox>

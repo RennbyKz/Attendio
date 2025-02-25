@@ -17,16 +17,16 @@
         <asp:Label runat="server" Text="Filter by Department: "></asp:Label>
         <asp:DropDownList ID="ddlDepartment" runat="server" AutoPostBack="true" OnSelectedIndexChanged="ddlDepartment_SelectedIndexChanged">
         </asp:DropDownList>
-             <div class="total-users">
-    <i class="fa fa-user-graduate"></i>
-    <span>Total Teachers:</span> 
-    <asp:Label ID="lblTotalUsers" runat="server"></asp:Label>
-</div>
+        <div class="total-users">
+            <i class="fa fa-user-graduate"></i>
+            <span>Total Teachers:</span> 
+            <asp:Label ID="lblTotalUsers" runat="server"></asp:Label>
+        </div>
     </div>
 
     <!-- Teacher GridView -->
     <asp:GridView ID="gvTeachers" runat="server" AutoGenerateColumns="False" DataKeyNames="TeacherID" OnRowEditing="gvTeachers_RowEditing"
-        OnRowCancelingEdit="gvTeachers_RowCancelingEdit" OnRowUpdating="gvTeachers_RowUpdating" OnRowDeleting="gvTeachers_RowDeleting">
+        OnRowCancelingEdit="gvTeachers_RowCancelingEdit" OnRowUpdating="gvTeachers_RowUpdating" OnRowDeleting="gvTeachers_RowDeleting" OnRowDataBound="gvTeachers_RowDataBound">
         <Columns>
             <asp:BoundField DataField="TeacherID" HeaderText="ID" ReadOnly="True" Visible="False" />
             <asp:BoundField DataField="FullName" HeaderText="Full Name" />
@@ -35,16 +35,35 @@
             <asp:BoundField DataField="DepartmentName" HeaderText="Department Name" ReadOnly="true" />
             <asp:TemplateField HeaderText="Department ID">
                 <ItemTemplate>
-                    <asp:Label ID="lblDepartmentId" runat="server" Text='<%# Eval("DepartmentId") %>'></asp:Label>
+                    <asp:Label ID="lblDepartmentId" runat="server" Text='<%# Eval("departmentid") %>'></asp:Label>
                 </ItemTemplate>
                 <EditItemTemplate>
                     <asp:DropDownList ID="ddlDepartmentId" runat="server">
-                        <asp:ListItem Text="Computer Science" Value="1"></asp:ListItem>
-                        <asp:ListItem Text="Information Technology" Value="2"></asp:ListItem>
-                        <asp:ListItem Text="Mathematics" Value="3"></asp:ListItem>
-                        <asp:ListItem Text="Physics" Value="4"></asp:ListItem>
-                        <asp:ListItem Text="English" Value="5"></asp:ListItem>
-                        <asp:ListItem Text="Business Administration" Value="6"></asp:ListItem>
+                        <asp:ListItem Text="Information Science Department" Value="1"></asp:ListItem>
+                        <asp:ListItem Text="Department Of Myanmar" Value="2"></asp:ListItem>
+                        <asp:ListItem Text="English Department" Value="3"></asp:ListItem>
+                        <asp:ListItem Text="Computational Mathematics Department" Value="4"></asp:ListItem>
+                        <asp:ListItem Text="Software Technology Department" Value="5"></asp:ListItem>
+                        <asp:ListItem Text="Application Department" Value="6"></asp:ListItem>
+                        <asp:ListItem Text="Hardware Technology Department" Value="8"></asp:ListItem>
+                        <asp:ListItem Text="ITSM" Value="9"></asp:ListItem>
+                        <asp:ListItem Text="Physic Department" Value="10"></asp:ListItem>
+                    </asp:DropDownList>
+                </EditItemTemplate>
+            </asp:TemplateField>
+            <asp:TemplateField HeaderText="Role">
+                <ItemTemplate>
+                    <asp:Label ID="lblRole" runat="server" Text='<%# Eval("Role") %>'></asp:Label>
+                </ItemTemplate>
+                <EditItemTemplate>
+                    <asp:DropDownList ID="ddlRole" runat="server">
+                        <asp:ListItem Text="Rector" Value="Rector"></asp:ListItem>
+                        <asp:ListItem Text="Vice-Rector" Value="Vice-Rector"></asp:ListItem>
+                        <asp:ListItem Text="Professor" Value="Professor"></asp:ListItem>
+                        <asp:ListItem Text="Associate Professor" Value="Associate Professor"></asp:ListItem>
+                        <asp:ListItem Text="Lecturer" Value="Lecturer"></asp:ListItem>
+                        <asp:ListItem Text="Assistant Lecturer" Value="Assistant Lecturer"></asp:ListItem>
+                        <asp:ListItem Text="Tutor" Value="Tutor"></asp:ListItem>
                     </asp:DropDownList>
                 </EditItemTemplate>
             </asp:TemplateField>
@@ -64,41 +83,58 @@
     </asp:GridView>
 
     <!-- Modal for Add Teacher -->
-    <div id="modalForm" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal();">&times;</span>
-            <h3 id="modalTitle">Add New Teacher</h3>
-            <div class="row">
-                <div class="col-md-4">
-                    <label>Full Name:</label>
-                    <asp:TextBox ID="txtFullNameModal" runat="server" CssClass="form-control" />
-                </div>
-                <div class="col-md-4">
-                    <label>Email:</label>
-                    <asp:TextBox ID="txtEmailModal" runat="server" CssClass="form-control" />
-                </div>
-                <div class="col-md-4">
-                    <label>Phone Number:</label>
-                    <asp:TextBox ID="txtPhoneModal" runat="server" CssClass="form-control" />
-                </div>
-                <div class="col-md-4">
-                    <label>Department:</label>
-                    <asp:DropDownList ID="ddlDepartmentModal" runat="server" CssClass="form-control">
-                        <asp:ListItem Text="Computer Science" Value="1"></asp:ListItem>
-                        <asp:ListItem Text="Information Technology" Value="2"></asp:ListItem>
-                        <asp:ListItem Text="Mathematics" Value="3"></asp:ListItem>
-                        <asp:ListItem Text="Physics" Value="4"></asp:ListItem>
-                        <asp:ListItem Text="English" Value="5"></asp:ListItem>
-                        <asp:ListItem Text="Business Administration" Value="6"></asp:ListItem>
-                    </asp:DropDownList>
-                </div>
-                <div class="col-md-4 mt-4">
-                    <asp:Button ID="btnSaveTeacher" runat="server" CssClass="btn btn-primary" Text="Save Teacher" OnClick="btnSaveTeacher_Click" />
-                </div>
+    <!-- Modal for Add Teacher -->
+<div id="modalForm" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal();">&times;</span>
+        <h3 id="modalTitle">Add New Teacher</h3>
+        <div class="row">
+            <div class="col-md-4">
+                <label>Full Name:</label>
+                <asp:TextBox ID="txtFullNameModal" runat="server" CssClass="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label>Email:</label>
+                <asp:TextBox ID="txtEmailModal" runat="server" CssClass="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label>Phone Number:</label>
+                <asp:TextBox ID="txtPhoneModal" runat="server" CssClass="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label>Department:</label>
+                <asp:DropDownList ID="ddlDepartmentModal" runat="server" CssClass="form-control">
+                    <asp:ListItem Text="Information Science Department" Value="1"></asp:ListItem>
+                    <asp:ListItem Text="Department Of Myanmar" Value="2"></asp:ListItem>
+                    <asp:ListItem Text="English Department" Value="3"></asp:ListItem>
+                    <asp:ListItem Text="Computational Mathematics Department" Value="4"></asp:ListItem>
+                    <asp:ListItem Text="Software Technology Department" Value="5"></asp:ListItem>
+                    <asp:ListItem Text="Application Department" Value="6"></asp:ListItem>
+                    <asp:ListItem Text="Hardware Technology Department" Value="8"></asp:ListItem>
+                    <asp:ListItem Text="ITSM" Value="9"></asp:ListItem>
+                    <asp:ListItem Text="Physic Department" Value="10"></asp:ListItem>
+                </asp:DropDownList>
+            </div>
+            <div class="col-md-4">
+                <label>Role:</label>
+                <asp:DropDownList ID="ddlRoleModal" runat="server" CssClass="form-control">
+                  <asp:ListItem Text="Rector" Value="Rector"></asp:ListItem>
+                <asp:ListItem Text="Vice-Rector" Value="Vice-Rector"></asp:ListItem>
+                <asp:ListItem Text="Professor" Value="Professor"></asp:ListItem>
+                <asp:ListItem Text="Associate Professor" Value="Associate Professor"></asp:ListItem>
+                <asp:ListItem Text="Lecturer" Value="Lecturer"></asp:ListItem>
+                <asp:ListItem Text="Assistant Lecturer" Value="Assistant Lecturer"></asp:ListItem>
+                <asp:ListItem Text="Tutor" Value="Tutor"></asp:ListItem>
+            </asp:DropDownList>
+
+            </div>
+            <div class="col-md-4 mt-4">
+                <asp:Button ID="btnSaveTeacher" runat="server" CssClass="btn btn-primary" Text="Save Teacher" OnClick="btnSaveTeacher_Click" />
             </div>
         </div>
     </div>
-
+</div><br><br><br>
+    <footer>@Copyright 2025 Student Affair</footer>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

@@ -14,6 +14,7 @@ namespace AMS
             if (!IsPostBack)
             {
                 LoadUsers();
+                RemoveInactiveUsers();
             }
         }
 
@@ -40,89 +41,101 @@ namespace AMS
 
                     // Calculate and display total users
                     lblTotalUsers.Text = dt.Rows.Count.ToString();
-
                 }
             }
         }
 
-
-
-      protected void btnSaveUser_Click(object sender, EventArgs e)
-{
-    string baseUsername = txtUsernameModal.Text.ToLower().Replace(" ", "");
-    string password = txtPasswordModal.Text;
-    string name = textnameModal.Text; // Ensure correct ID is used
-    string role = ddlRoleModal.SelectedValue;
-    string newUsername = baseUsername;
-    int suffix = 1;
-
-    string connString = System.Configuration.ConfigurationManager.ConnectionStrings["UCSPDBConnectionString"].ConnectionString;
-    using (SqlConnection conn = new SqlConnection(connString))
-    {
-        conn.Open();
-
-        // Debugging: Check if name is fetched correctly
-      //  lblMessage.Text = "Name: " + name + "<br />";
-
-        // Check if username exists and generate unique username
-        while (true)
+        protected void RemoveInactiveUsers()
         {
-            string checkUsernameQuery = "SELECT COUNT(*) FROM Users WHERE username = @username";
-            using (SqlCommand checkCmd = new SqlCommand(checkUsernameQuery, conn))
+            string connString = System.Configuration.ConfigurationManager.ConnectionStrings["UCSPDBConnectionString"].ConnectionString;
+            using (SqlConnection conn = new SqlConnection(connString))
             {
-                checkCmd.Parameters.AddWithValue("@username", newUsername);
-                int count = (int)checkCmd.ExecuteScalar();
-
-                if (count == 0)
+                conn.Open();
+                string query = @"
+                DELETE FROM Users
+                WHERE student_id IN (SELECT id FROM Students WHERE status IN ('Graduated', 'Left'))
+                OR teacher_id IN (SELECT TeacherID FROM Teachers WHERE status = 'Resigned')";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
-                    break; // Unique username found
-                }
-                else
-                {
-                    newUsername = baseUsername + suffix.ToString();
-                    suffix++;
+                    cmd.ExecuteNonQuery();
                 }
             }
         }
 
-        // Insert new user with unique username
-        string query = "INSERT INTO Users (username, password, role, RelatedName, is_first_login) VALUES (@username, @password, @role, @name, 0)";
-        using (SqlCommand cmd = new SqlCommand(query, conn))
+        protected void btnSaveUser_Click(object sender, EventArgs e)
         {
-            cmd.Parameters.AddWithValue("@username", newUsername);
-            cmd.Parameters.AddWithValue("@password", password);
-            cmd.Parameters.AddWithValue("@role", role);
-            cmd.Parameters.AddWithValue("@name", name);
+            string baseUsername = txtUsernameModal.Text.ToLower().Replace(" ", "");
+            string password = txtPasswordModal.Text;
+            string name = textnameModal.Text; // Ensure correct ID is used
+            string role = ddlRoleModal.SelectedValue;
+            string newUsername = baseUsername;
+            int suffix = 1;
 
-            try
+            string connString = System.Configuration.ConfigurationManager.ConnectionStrings["UCSPDBConnectionString"].ConnectionString;
+            using (SqlConnection conn = new SqlConnection(connString))
             {
-                cmd.ExecuteNonQuery();
-                LoadUsers();
-                ScriptManager.RegisterStartupScript(this, this.GetType(), "closeModal", "closeModal();", true);
-                ScriptManager.RegisterStartupScript(this, this.GetType(), "showSuccessMessage", "showSuccessMessage('New Admin added successfully!');", true);
-            }
-            catch (SqlException ex)
-            {
-                lblMessage.Text = "Error: " + ex.Message;
-                ScriptManager.RegisterStartupScript(this, this.GetType(), "showErrorMessage", "showErrorMessage('Error: " + ex.Message + "');", true);
+                conn.Open();
+
+                // Check if username exists and generate unique username
+                while (true)
+                {
+                    string checkUsernameQuery = "SELECT COUNT(*) FROM Users WHERE username = @username";
+                    using (SqlCommand checkCmd = new SqlCommand(checkUsernameQuery, conn))
+                    {
+                        checkCmd.Parameters.AddWithValue("@username", newUsername);
+                        int count = (int)checkCmd.ExecuteScalar();
+
+                        if (count == 0)
+                        {
+                            break; // Unique username found
+                        }
+                        else
+                        {
+                            newUsername = baseUsername + suffix.ToString();
+                            suffix++;
+                        }
+                    }
+                }
+
+                // Insert new user with unique username
+                string query = "INSERT INTO Users (username, password, role, RelatedName, is_first_login) VALUES (@username, @password, @role, @name, 0)";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@username", newUsername);
+                    cmd.Parameters.AddWithValue("@password", password);
+                    cmd.Parameters.AddWithValue("@role", role);
+                    cmd.Parameters.AddWithValue("@name", name);
+
+                    try
+                    {
+                        cmd.ExecuteNonQuery();
+                        LoadUsers();
+                        RemoveInactiveUsers();
+                        ScriptManager.RegisterStartupScript(this, this.GetType(), "closeModal", "closeModal();", true);
+                        ScriptManager.RegisterStartupScript(this, this.GetType(), "showSuccessMessage", "showSuccessMessage('New Admin added successfully!');", true);
+                    }
+                    catch (SqlException ex)
+                    {
+                        lblMessage.Text = "Error: " + ex.Message;
+                        ScriptManager.RegisterStartupScript(this, this.GetType(), "showErrorMessage", "showErrorMessage('Error: " + ex.Message + "');", true);
+                    }
+                }
             }
         }
-    }
-}
-
-
 
         protected void btnGenerateStudents_Click(object sender, EventArgs e)
         {
             InsertActiveStudents();
             LoadUsers();
+            RemoveInactiveUsers();
             ScriptManager.RegisterStartupScript(this, this.GetType(), "showSuccessMessage", "showSuccessMessage('Students generated successfully!');", true);
         }
 
         protected void btnGenerateTeachers_Click(object sender, EventArgs e)
         {
-            InsertActiveTeachers();  
+            InsertActiveTeachers();
             LoadUsers();
+            RemoveInactiveUsers();
             ScriptManager.RegisterStartupScript(this, this.GetType(), "showSuccessMessage", "showSuccessMessage('Teachers generated successfully!');", true);
         }
 
@@ -135,10 +148,10 @@ namespace AMS
 
                 // Insert active students with unique usernames
                 string studentQuery = @"
-        DECLARE @baseUsername NVARCHAR(50), @newUsername NVARCHAR(50), @suffix INT, @student_id INT;
+        DECLARE @baseUsername NVARCHAR(50), @newUsername NVARCHAR(50), @suffix INT, @student_id INT, @formattedRollNo NVARCHAR(20);
 
         DECLARE studentCursor CURSOR FOR
-        SELECT s.name, s.id
+        SELECT s.name, s.id, s.formatted_rollno
         FROM Students s
         WHERE s.status = 'Active'
         AND NOT EXISTS (
@@ -147,11 +160,11 @@ namespace AMS
             AND u.role = 'Student');
 
         OPEN studentCursor;
-        FETCH NEXT FROM studentCursor INTO @baseUsername, @student_id;
+        FETCH NEXT FROM studentCursor INTO @baseUsername, @student_id, @formattedRollNo;
 
         WHILE @@FETCH_STATUS = 0
         BEGIN
-            SET @baseUsername = LOWER(REPLACE(@baseUsername, ' ', ''));
+            SET @baseUsername = LOWER(REPLACE(@baseUsername, ' ', '')) + REPLACE(@formattedRollNo, '-', '');
             SET @newUsername = @baseUsername;
             SET @suffix = 1;
 
@@ -164,7 +177,7 @@ namespace AMS
             INSERT INTO Users (username, password, role, is_first_login, student_id)
             VALUES (@newUsername, 'changeme', 'Student', 1, @student_id);
 
-            FETCH NEXT FROM studentCursor INTO @baseUsername, @student_id;
+            FETCH NEXT FROM studentCursor INTO @baseUsername, @student_id, @formattedRollNo;
         END
 
         CLOSE studentCursor;
@@ -175,7 +188,6 @@ namespace AMS
                     try
                     {
                         cmd.ExecuteNonQuery();
-                        // lblMessage.Text = "Students inserted successfully!";
                     }
                     catch (SqlException ex)
                     {
@@ -264,6 +276,7 @@ namespace AMS
                         lblMessage.Text = "User updated successfully!";
                         gvUsers.EditIndex = -1;
                         LoadUsers();
+                        RemoveInactiveUsers();
                         ScriptManager.RegisterStartupScript(this, this.GetType(), "showSuccessMessage", "showSuccessMessage('User updated successfully!');", true);
                     }
                     catch (SqlException ex)
@@ -291,8 +304,8 @@ namespace AMS
                     try
                     {
                         cmd.ExecuteNonQuery();
-                      //  lblMessage.Text = "User deleted successfully!";
                         LoadUsers();
+                        RemoveInactiveUsers();
                         ScriptManager.RegisterStartupScript(this, this.GetType(), "showSuccessMessage", "showSuccessMessage('User deleted successfully!');", true);
                     }
                     catch (SqlException ex)
@@ -322,7 +335,6 @@ namespace AMS
 
                     gvUsers.DataSource = dt;
                     gvUsers.DataBind();
-                    
                 }
             }
         }

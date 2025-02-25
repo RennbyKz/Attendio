@@ -9,7 +9,7 @@ namespace AMS
 {
     public partial class ManageTeachers : System.Web.UI.Page
     {
-        string connString = System.Configuration.ConfigurationManager.ConnectionStrings["UCSPDBConnectionString"].ConnectionString;
+        string connString = ConfigurationManager.ConnectionStrings["UCSPDBConnectionString"].ConnectionString;
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -45,6 +45,7 @@ namespace AMS
                             t.Email, 
                             t.PhoneNumber,
                             t.Status, 
+                            t.Role,
                             dep.departmentid, 
                             dep.departmentname 
                          FROM 
@@ -75,18 +76,17 @@ namespace AMS
             string email = txtEmailModal.Text;
             string phoneNumber = txtPhoneModal.Text;
             string department = ddlDepartmentModal.SelectedValue;
-
-
+            string role = ddlRoleModal.SelectedValue;
 
             using (SqlConnection conn = new SqlConnection(connString))
             {
                 conn.Open();
-                SqlCommand cmd = new SqlCommand("INSERT INTO Teachers (FullName, Email, PhoneNumber, department_id) VALUES (@FullName, @Email, @PhoneNumber, @Department)", conn);
+                SqlCommand cmd = new SqlCommand("INSERT INTO Teachers (FullName, Email, PhoneNumber, department_id, role) VALUES (@FullName, @Email, @PhoneNumber, @Department, @Role)", conn);
                 cmd.Parameters.AddWithValue("@FullName", fullName);
                 cmd.Parameters.AddWithValue("@Email", email);
                 cmd.Parameters.AddWithValue("@PhoneNumber", phoneNumber);
                 cmd.Parameters.AddWithValue("@Department", department);
-         
+                cmd.Parameters.AddWithValue("@Role", role);
                 cmd.ExecuteNonQuery();
             }
 
@@ -94,22 +94,15 @@ namespace AMS
             ScriptManager.RegisterStartupScript(this, this.GetType(), "showSuccessMessage", "showSuccessMessage('Teacher added successfully');", true);
         }
 
-
-        private void CloseModal()
-        {
-            // Implementation to close the modal
-        }
-
-
         protected void btnSearch_Click(object sender, EventArgs e)
         {
             LoadTeachers(txtSearch.Text, int.Parse(ddlDepartment.SelectedValue));
         }
+
         protected void ddlDepartment_SelectedIndexChanged(object sender, EventArgs e)
         {
             LoadTeachers(txtSearch.Text, int.Parse(ddlDepartment.SelectedValue));
         }
-
 
         protected void gvTeachers_RowEditing(object sender, GridViewEditEventArgs e)
         {
@@ -134,16 +127,22 @@ namespace AMS
             DropDownList ddlDepartmentId = (DropDownList)row.FindControl("ddlDepartmentId");
             int departmentId = Convert.ToInt32(ddlDepartmentId.SelectedValue);
 
+            DropDownList ddlStatus = (DropDownList)row.FindControl("ddlStatus");
+            string status = ddlStatus.SelectedValue;
+
+            DropDownList ddlRole = (DropDownList)row.FindControl("ddlRole");
+            string role = ddlRole.SelectedValue;
 
             using (SqlConnection conn = new SqlConnection(connString))
             {
-                string query = "UPDATE Teachers SET FullName=@FullName, Email=@Email, PhoneNumber=@PhoneNumber, department_id=@Department WHERE TeacherID=@TeacherID";
+                string query = "UPDATE Teachers SET FullName=@FullName, Email=@Email, PhoneNumber=@PhoneNumber, department_id=@Department, status=@Status, role=@Role WHERE TeacherID=@TeacherID";
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@FullName", fullName);
                 cmd.Parameters.AddWithValue("@Email", email);
                 cmd.Parameters.AddWithValue("@PhoneNumber", phoneNumber);
                 cmd.Parameters.AddWithValue("@Department", departmentId);
-               
+                cmd.Parameters.AddWithValue("@Status", status);
+                cmd.Parameters.AddWithValue("@Role", role);
                 cmd.Parameters.AddWithValue("@TeacherID", teacherID);
                 conn.Open();
                 cmd.ExecuteNonQuery();
@@ -152,19 +151,45 @@ namespace AMS
             LoadTeachers();
         }
 
-
-        protected void gvStudents_RowDataBound(object sender, GridViewRowEventArgs e)
+        protected void gvTeachers_RowDataBound(object sender, GridViewRowEventArgs e)
         {
             if (e.Row.RowType == DataControlRowType.DataRow && (e.Row.RowState & DataControlRowState.Edit) > 0)
             {
-
-                // Bind Department ID DropDownList
                 DropDownList ddlDepartmentId = (DropDownList)e.Row.FindControl("ddlDepartmentId");
-                string departmentId = DataBinder.Eval(e.Row.DataItem, "department_id").ToString();
-                ddlDepartmentId.SelectedValue = departmentId;
+                DropDownList ddlStatus = (DropDownList)e.Row.FindControl("ddlStatus");
+                DropDownList ddlRole = (DropDownList)e.Row.FindControl("ddlRole");
+
+                if (ddlDepartmentId != null)
+                {
+                    using (SqlConnection conn = new SqlConnection(connString))
+                    {
+                        SqlDataAdapter da = new SqlDataAdapter("SELECT departmentid, departmentname FROM Departments", conn);
+                        DataTable dt = new DataTable();
+                        da.Fill(dt);
+                        ddlDepartmentId.DataSource = dt;
+                        ddlDepartmentId.DataTextField = "departmentname";
+                        ddlDepartmentId.DataValueField = "departmentid";
+                        ddlDepartmentId.DataBind();
+
+                        // Set the selected value
+                        string departmentId = DataBinder.Eval(e.Row.DataItem, "departmentid").ToString();
+                        ddlDepartmentId.Items.FindByValue(departmentId).Selected = true;
+                    }
+                }
+
+                if (ddlStatus != null)
+                {
+                    string status = DataBinder.Eval(e.Row.DataItem, "Status").ToString();
+                    ddlStatus.Items.FindByValue(status).Selected = true;
+                }
+
+                if (ddlRole != null)
+                {
+                    string role = DataBinder.Eval(e.Row.DataItem, "Role").ToString();
+                    ddlRole.Items.FindByValue(role).Selected = true;
+                }
             }
         }
-
 
         protected void gvTeachers_RowDeleting(object sender, GridViewDeleteEventArgs e)
         {
@@ -177,14 +202,11 @@ namespace AMS
                 conn.Open();
                 cmd.ExecuteNonQuery();
 
-                // Reseed identity column so the next student gets the deleted ID.
-                string reseedQuery = "DBCC CHECKIDENT ('Teacherss', RESEED, @TeacherId)";
+                // Reseed identity column so the next teacher gets the deleted ID.
+                string reseedQuery = "DBCC CHECKIDENT ('Teachers', RESEED, @TeacherId)";
                 SqlCommand reseedCmd = new SqlCommand(reseedQuery, conn);
                 reseedCmd.Parameters.AddWithValue("@TeacherId", teacherID);
-
                 reseedCmd.ExecuteNonQuery();
-
-
             }
             LoadTeachers();
             ScriptManager.RegisterStartupScript(this, this.GetType(), "showSuccessMessage", "showSuccessMessage('Teacher deleted successfully');", true);

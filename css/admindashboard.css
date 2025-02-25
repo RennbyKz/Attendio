@@ -1,4 +1,6 @@
-﻿/* Reset some default styles */
+﻿@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+
+/* 🔹 Reset Default Styles */
 * {
     margin: 0;
     padding: 0;
@@ -6,73 +8,85 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Poppins', sans-serif;
     background-color: #f4f7fa;
     color: #333;
     display: flex;
     height: 100vh;
+    overflow-x: hidden;
 }
 
-/* Sidebar Styles */
+/* 🔹 Sidebar Styling */
 .sidebar {
     width: 250px;
-    background: linear-gradient(to bottom, #096b0f, #33e83f);
+    background: linear-gradient(to bottom, #00A9F2, #00E2E0);
     color: white;
-    padding-top: 20px;
     position: fixed;
     height: 100%;
     left: 0;
     top: 0;
+    transition: all 0.4s ease-in-out;
+    padding-top: 15px;
 }
 
-    .sidebar h2 {
-        text-align: center;
-        color: #ecf0f1;
-        margin-bottom: 40px;
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+}
+
+.sidebar ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+    .sidebar ul li {
+        margin: 10px 0;
+        text-align: left;
     }
 
-    .sidebar ul {
-        list-style-type: none;
-    }
-
-        .sidebar ul li {
-            margin: 15px 0;
-            text-align: left;
-            padding-right: 10px;
+        .sidebar ul li a {
+            color: #ecf0f1;
+            text-decoration: none;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.3s ease;
         }
 
-            .sidebar ul li a {
-                color: #ecf0f1;
-                text-decoration: none;
-                padding: 10px 20px;
-                display: block;
-                transition: background-color 0.3s ease;
+            .sidebar ul li a i {
+                margin-right: 10px;
             }
 
-                .sidebar ul li a:hover {
-                    background-color: #006699;
-                }
-
-            .sidebar ul li.active a {
-                background-color: #16a085;
+            .sidebar ul li a:hover {
+                background-color: #006699;
             }
 
-/* Content Area */
+        .sidebar ul li.active a {
+            background-color: #16a085;
+        }
+
+/* 🔹 Sidebar Hidden State */
+.sidebar.hidden {
+    left: -200px; /* Adjust this value to partially hide the sidebar */
+}
+
+/* 🔹 Content Styling */
 .content {
     margin-left: 250px;
     padding: 20px;
-    width: 100%;
+    width: calc(100% - 250px);
     height: 100%;
-    overflow-y: auto;
+    transition: margin-left 0.4s ease-in-out;
 }
 
-    .content h1 {
-        font-size: 2rem;
-        margin-bottom: 20px;
-        color: #2c3e50;
+    .content.shift {
+        margin-left: 50px; /* Adjust this value to match the partially hidden sidebar */
+        width: calc(100% - 50px);
     }
 
-/* Top Navigation */
+/* 🔹 Navbar Styling */
 .top-nav {
     width: 100%;
     background-color: #34495e;
@@ -86,11 +100,45 @@ body {
     left: 250px;
     right: 0;
     z-index: 1000;
+    transition: left 0.4s ease-in-out;
 }
 
+    .top-nav.shift {
+        left: 50px; /* Adjust this value to match the partially hidden sidebar */
+    }
 
+/* 🔹 Sidebar Toggle Button */
+.nav-toggle {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    position: fixed;
+    top: 10px;
+    left: 10px; /* Adjust this value to keep the button visible */
+    z-index: 1001;
+    transition: left 0.4s ease-in-out;
+}
 
-/* Dashboard Card Styles */
+    .nav-toggle .btn-toggle {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        font-size: 22px;
+        padding: 5px 10px;
+        color: white;
+    }
+
+/* 🔹 Top Bar Toggle Button */
+.topbar-toggler {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 24px;
+    padding: 5px 10px;
+    color: white;
+}
+
+/* 🔹 Dashboard Card Styling */
 .card {
     background-color: white;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -127,79 +175,106 @@ body {
                 text-decoration: underline;
             }
 
-/* Tabs */
-.tabs {
-    display: flex;
-    margin-bottom: 20px;
+/* 🔹 Button Styles */
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    text-decoration: none;
+    background-color: #16a085;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
-    .tabs li {
-        list-style-type: none;
-        padding: 10px 20px;
-        background-color: #ecf0f1;
-        margin-right: 10px;
-        cursor: pointer;
-        border-radius: 5px;
-        transition: background-color 0.3s ease;
+    .btn:hover {
+        background-color: #138d75;
     }
 
-        .tabs li.active {
-            background-color: #16a085;
-            color: white;
-        }
-
-        .tabs li:hover {
-            background-color: #bdc3c7;
-        }
-
-.content .tab-content {
-    display: none;
+/* 🔹 Form Styles */
+input[type="text"], input[type="password"], input[type="email"], select, textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
 }
 
-    .content .tab-content.visible {
-        display: block;
-    }
+label {
+    font-weight: bold;
+    margin-top: 10px;
+    display: block;
+}
 
-/* Responsive Design */
+/* 🔹 Responsive Design */
 @media screen and (max-width: 768px) {
     body {
         flex-direction: column;
     }
 
     .sidebar {
-        width: 100%;
-        height: auto;
-        position: relative;
-        top: 0;
-        left: 0;
+        width: 250px;
+        height: 100%;
+        left: -260px;
     }
+
+        .sidebar.hidden {
+            left: -200px;
+        }
 
     .content {
         margin-left: 0;
+        width: 100%;
+    }
+
+        .content.shift {
+            margin-left: 50px;
+            width: calc(100% - 50px);
+        }
+
+    .nav-toggle {
+        left: 10px;
     }
 
     .top-nav {
         left: 0;
     }
 
-        .top-nav .search input {
-            width: 100%;
+        .top-nav.shift {
+            left: 50px;
         }
 
     .card {
         margin-bottom: 10px;
     }
-
-    .tabs li {
-        padding: 8px 15px;
-    }
 }
 
-
+/* 🔹 Admin Logo */
 .adminlogo {
-    width: 200px; /* Adjust the width as needed */
-    height: auto; /* Maintain aspect ratio */
     display: block;
-    margin: 0 auto; /* Center the logo */
-   
+    margin: 0 auto 15px auto;
+    width: 200px; /* Adjusted size */
+    height: auto;
 }
+.spinner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+    .spinner img {
+        width: 100px; /* Adjust the size as needed */
+        height: 100px; /* Adjust the size as needed */
+    }
