@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Timetable</title>
+  <style>
+     :root {
+      --bg-light: #f0f0f0;
+      --bg-dark: #121212;
+      --text-light: #333;
+      --text-dark: #eee;
+      --primary: #00509e;
+      --highlight: green;
+    }
+     .toggle-buttons button {
+      margin: 5px;
+      padding: 8px 15px;
+      font-size: 1em;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+      background-color: var(--primary);
+      color: white;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    h1, h2 {
+      text-align: center;
+      color: #00509e;
+    }
+    table {
+      width: 95%;
+      margin: 20px auto;
+      border-collapse: collapse;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      font-size: 0.9em;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #00509e;
+      color: white;
+    }
+    .active {
+      background-color: green;
+      color: white;
+    }
+    .course-list {
+      width: 95%;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: white;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    ul li {
+      margin: 10px 0;
+      padding: 10px;
+      background-color: #e6f7ff;
+      border-left: 4px solid #00509e;
+      border-radius: 4px;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    .course-name {
+      font-weight: bold;
+    }
+    .instructor-names {
+      color: #555;
+    }
+    footer {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 20px;
+      font-size: 0.9em;
+      color: #333;
+    }
+    @media (max-width: 600px) {
+      table, th, td {
+        font-size: 0.75em;
+      }
+      ul li {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      footer {
+        flex-direction: column;
+        gap: 5px;
+        text-align: center;
+      }
+    }
+     .dark-mode {
+      background-color: var(--bg-dark);
+      color: var(--text-dark);
+    }
+    .dark-mode .course-list {
+  background-color: #1e1e1e;
+  color: var(--text-dark);
+}
+
+.dark-mode .course-list ul li {
+  background-color: #2a2a2a;
+  border-left-color: var(--primary);
+}
+
+.dark-mode .instructor-names {
+  color: #ccc;
+}
+.dark-mode footer {
+  background-color: #1a1a1a;
+  color: var(--text-dark);
+  border-top: 1px solid #333;
+}
+
+  </style>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const today = new Date().getDay();
+      const rows = document.querySelectorAll('table tr');
+      rows.forEach(row => {
+        if (row.children[0] && row.children[0].innerText === days[today]) {
+          row.classList.add('active');
+        }
+      });
+    });
+    function toggleDarkMode() {
+    const body = document.body;
+    const btn = document.getElementById('modeToggle');
+    body.classList.toggle('dark-mode');
+
+    const isDark = body.classList.contains('dark-mode');
+    btn.innerHTML = isDark ? '🌙' : '🌞';
+  }
+  </script>
+</head>
+<body>
+  <h1>Semester VII Timetable</h1>
+  <h2>(Computer Science)(A-6)</h2>
+  <div class="toggle-buttons" align="right">
+  <button id="modeToggle" onclick="toggleDarkMode()">
+    🌙
+  </button>
+</div>
+
+  <table>
+    <tr>
+      <th>Time</th>
+      <th>9:00-10:00</th>
+      <th>10:00-11:00</th>
+      <th style="background-color: grey;"></th>
+      <th>12:00-1:00</th>
+      <th>1:00-2:00</th>
+      <th>2:00-3:00</th>
+      <th>3:00-4:00</th>
+    </tr>
+    <tr>
+      <td>Monday</td>
+      <td colspan="2">CST-4111 (CS+CT)(Analysis)</td>
+      <td style="background-color: grey;"></td>
+      <td colspan="2">E-4101 (CS+CT)(Eng)</td>
+      <td colspan="2"></td>
+    </tr>
+    <tr>
+      <td>Tuesday</td>
+      <td colspan="2">CS-4113(CV)</td>
+      <td style="background-color: grey;"></td>
+      <td colspan="2">CST-4125 (CS+CT)(SPM)</td>
+      <td colspan="2">E-4101 (CS+CT)(Eng)</td>
+    </tr>
+    <tr>
+      <td>Wednesday</td>
+      <td colspan="2">CST-4111 (CS+CT)(Analysis)</td>
+      <td style="background-color: grey;"></td>
+      <td colspan="2">CST-4142(Math)</td>
+      <td colspan="2">Activity</td>
+    </tr>
+    <tr>
+      <td>Thursday</td>
+      <td colspan="2">CS-4113(CV)</td>
+      <td style="background-color: grey;"></td>
+      <td colspan="2">CST-4142(Math)</td>
+      <td colspan="2">CS-4124(IAS)</td>         
+    </tr>
+    <tr>
+      <td>Friday</td>
+      <td colspan="2">CST-4125 (CS+CT)(SPM)</td>
+      <td style="background-color: grey;"></td>
+      <td colspan="2">CS-4124(IAS)</td>
+      <td colspan="2"></td>
+    </tr>
+  </table>
+  <div class="course-list">
+    <h2>Course List</h2>
+    <ul> 
+      <li><span class="course-name">E-4101 - Business English I</span><span class="instructor-names">Daw Hnin Yee Aung</span></li>
+      <li><span class="course-name">CST-3242 - Probability and Statistics</span><span class="instructor-names">Daw Win Thet Thet Han</span></li>
+      <li><span class="course-name">CST-4111 - Analysis of Algorithms</span><span class="instructor-names">Daw Htwe Htwe Aung</span></li>
+      <li><span class="course-name">CST-4142 - Operations Research</span><span class="instructor-names">Daw Ngu Wah Khin</span></li>
+      <li><span class="course-name">CS-4113 - Computer Vision</span><span class="instructor-names">Daw Hnin Cherry</span></li>
+      <li><span class="course-name">CS-4124 - Information Assurance and Security</span><span class="instructor-names">Daw Yu Yu Khaing</span></li>
+      <li><span class="course-name">CST-4125 - Software Project Management</span><span class="instructor-names">Daw Chit Su Wai</span></li>
+    </ul>
+    <footer>
+      <div>Instructor - Daw Yu Yu Khaing</div>
+      <div>Class Teacher - Daw Chit Su Wai</div>
+    </footer>
+  </div>
+</body>
+</html>
